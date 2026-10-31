@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FoodLink · Turnos de Reparto</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap');
+
+  :root{
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --text: #111111;
+    --muted: #666666;
+    --accent: #ff1a1a;
+    --accent-hover: #cc0000;
+    --success: #00b85c;
+    --border: #e0e0e0;
+    --radius: 16px;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  
+  body{
+    font-family: 'Outfit', system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px 16px 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app{max-width: 900px; margin: 0 auto;}
+
+  /* --- HEADER / HERO --- */
+  .hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  }
+
+  .logo-img {
+    width: 65px; height: 65px;
+    border-radius: 16px;
+    background: #111;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+  }
+  
+  .logo-img img { width: 100%; height: 100%; object-fit: cover; }
+
+  .brand-text h1 {
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    color: #111;
+  }
+  .brand-text p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* --- INDICADOR EN LÍNEA --- */
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #ccc;
+    display: inline-block;
+    transition: all 0.3s;
+  }
+  .status-dot.online {
+    background: var(--success);
+    box-shadow: 0 0 8px rgba(0, 184, 92, 0.5);
+  }
+
+  /* --- BANNER NOTIFICACIONES --- */
+  .notif-banner {
+    background: #fff;
+    border: 1px solid var(--accent);
+    border-left: 6px solid var(--accent);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    box-shadow: 0 4px 15px rgba(255, 26, 26, 0.08);
+  }
+  .notif-banner p { font-weight: 600; font-size: 0.95rem; color: #333; margin: 0; }
+  
+  /* --- TARJETAS --- */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  }
+  .card + .card { margin-top: 20px; }
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-title-left::before {
+    content: '';
+    width: 6px; height: 20px;
+    background: var(--accent);
+    border-radius: 4px;
+  }
+
+  /* --- FORMULARIO --- */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .field > span {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  input[type=text], input[type=tel], input[type=time], input[type=password] {
+    background: #fcfcfc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255, 26, 26, 0.1);
+    background: #fff;
+  }
+
+  .dias { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dia-chip { position: relative; }
+  .dia-chip input { position: absolute; opacity: 0; pointer-events: none; }
+  .dia-chip span {
+    display: block; padding: 10px 16px; border-radius: 10px;
+    background: #fcfcfc; border: 1px solid var(--border);
+    font-size: 0.9rem; font-weight: 700; color: var(--muted);
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .dia-chip input:checked + span {
+    background: var(--accent); border-color: var(--accent);
+    color: #fff; box-shadow: 0 4px 10px rgba(255, 26, 26, 0.2);
+  }
+
+  /* --- BOTONES --- */
+  .btn {
+    border: none; cursor: pointer; font-family: inherit;
+    font-weight: 800; border-radius: 10px; padding: 14px 24px;
+    font-size: 0.95rem; transition: all 0.2s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn:active { transform: scale(0.98); }
+  
+  .btn-primary {
+    background: var(--accent); color: #fff;
+    width: 100%; box-shadow: 0 6px 20px rgba(255, 26, 26, 0.2);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+
+  .btn-ghost {
+    background: #f0f0f0; color: #333; border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: #e0e0e0; }
+
+  .btn-danger {
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--accent); font-size: 0.85rem; padding: 10px 16px;
+  }
+  .btn-danger:hover { background: rgba(255, 26, 26, 0.05); }
+
+  .btn-edit-icon {
+    background: #f0f0f0; border: 1px solid var(--border);
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.2rem; transition: 0.2s;
+  }
+  .btn-edit-icon:hover { background: #fff; border-color: var(--accent); }
+
+  /* --- LISTAS Y CHIPS --- */
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
+  .chips::-webkit-scrollbar { height: 6px; }
+  .chips::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+  
+  .chip {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 6px;
+    background: #fcfcfc; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 10px; padding: 10px 16px; font-size: 0.9rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .chip.active { background: #111; color: #fff; border-color: #111; }
+  .chip b { background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
+  .chip.active b { background: rgba(255,255,255,0.2); }
+
+  .lista { display: flex; flex-direction: column; gap: 10px; }
+  .item {
+    display: flex; align-items: center; gap: 14px;
+    background: #fcfcfc; border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+    transition: all 0.2s;
+  }
+  .item:hover { border-color: #ccc; background: #fff; }
+  
+  .avatar {
+    width: 46px; height: 46px; border-radius: 12px;
+    display: grid; place-items: center;
+    font-weight: 900; font-size: 1.1rem;
+    background: rgba(255, 26, 26, 0.1); color: var(--accent);
+  }
+  
+  .info { flex: 1; min-width: 0; }
+  .info .nombre { font-weight: 800; font-size: 1rem; color: #111; }
+  .info .meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+  .info .meta a { color: #111; text-decoration: none; font-weight: 700; }
+  .info .meta a:hover { color: var(--accent); }
+  
+  .hora-badge {
+    background: #eef0f2; color: #333;
+    padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem;
+  }
+  .tiempo-restante {
+    color: var(--accent); font-weight: 800; background: rgba(255, 26, 26, 0.08);
+    padding: 4px 10px; border-radius: 6px;
+  }
+  
+  .del { background: transparent; border: none; color: #aaa; cursor: pointer; font-size: 1.2rem; padding: 8px; transition: 0.2s; }
+  .del:hover { color: var(--accent); }
+  .empty { text-align: center; padding: 30px; color: var(--muted); font-size: 0.95rem; }
+
+  /* --- TOAST Y MODALES --- */
+  #toast {
+    position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 120%);
+    background: #111; color: #fff; font-weight: 700; font-size: 0.95rem;
+    padding: 14px 28px; border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transition: 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.4); z-index: 999;
+  }
+  #toast.show { transform: translate(-50%, 0); }
+
+  .admin-toggle {
+    position: fixed; top: 20px; right: 20px;
+    background: #fff; border: 1px solid var(--border); color: #333;
+    border-radius: 10px; padding: 10px 16px; font-size: 0.85rem; font-weight: 700;
+    cursor: pointer; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  }
+  .admin-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  body.admin .admin-toggle { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .admin-section { display: none; }
+  body.admin .admin-section { display: block; }
+  body.admin .public-section { display: none; }
+
+  .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .live-box { background: #fcfcfc; border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .live-box h4 { font-size: 0.85rem; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; font-weight: 800; letter-spacing: 0.5px; }
+  .live-box.now h4 { color: var(--success); }
+  .live-box.soon h4 { color: var(--accent); }
+  
+  .live-person { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .live-person:last-child { border-bottom: none; }
+  .live-person .dot-live { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .live-box.now .dot-live { background: var(--success); }
+  .live-box.soon .dot-live { background: var(--accent); }
+  .live-person .who { flex: 1; font-weight: 700; }
+  .live-person .when { color: var(--muted); font-size: 0.8rem; font-weight: 600; }
+
+  .stat-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #f0f0f0; color: #333; border: 1px solid var(--border);
+    padding: 8px 16px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; margin-right: 8px;
+  }
+  .stat-badge.now { background: rgba(0, 184, 92, 0.1); color: var(--success); border-color: rgba(0, 184, 92, 0.2); }
+  .stat-badge.soon { background: rgba(255, 26, 26, 0.1); color: var(--accent); border-color: rgba(255, 26, 26, 0.2); }
+
+  .pin-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+  }
+  .pin-overlay.show { display: flex; }
+  .pin-box {
+    background: #fff; border-radius: 20px; padding: 30px;
+    max-width: 340px; width: 100%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  }
+  .pin-box h3 { margin-bottom: 20px; font-size: 1.2rem; color: #111; }
+  .pin-box input { text-align: center; font-size: 1.5rem; letter-spacing: 4px; margin-bottom: 20px; }
+
+  /* ALARMA VISUAL EN PANTALLA (FALLBACK) */
+  .alarma-overlay {
+    position: fixed; inset: 0; background: rgba(255, 0, 0, 0.95);
+    display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px;
+    animation: parpadeo 1s infinite;
+  }
+  @keyframes parpadeo { 0% { background: rgba(255,0,0,0.95); } 50% { background: rgba(150,0,0,0.95); } 100% { background: rgba(255,0,0,0.95); } }
+  .alarma-box {
+    background: #fff; border-radius: 20px; padding: 40px 30px;
+    max-width: 400px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .alarma-box h2 { color: var(--accent); font-size: 2rem; margin-bottom: 15px; }
+  .alarma-box p { font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 25px; line-height: 1.5; }
+
+  @media (max-width: 768px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .live-grid { grid-template-columns: 1fr; }
+    .hero { flex-direction: column; text-align: center; }
+    .brand-text h1 { font-size: 1.4rem; }
+    .brand-text p { justify-content: center; }
+    .notif-banner { justify-content: center; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<button class="admin-toggle" id="adminToggle">🔒 Modo Admin</button>
+
+<div class="app">
+  <div class="public-section">
+    
+    <header class="hero">
+      <div class="logo-img">
+        <img src="https://files.catbox.moe/v4c218.jpg" alt="FoodLink Logo" onerror="this.style.display='none'; this.parentElement.innerHTML='⚡';">
+      </div>
+      <div class="brand-text">
+        <h1>FoodLink</h1>
+        <p><span class="status-dot" id="statusDot"></span> <span id="statusText">Conectando...</span></p>
+      </div>
+    </header>
+
+    <div class="notif-banner" id="notifBanner">
+      <p>🔔 <strong>¡No olvides tu turno!</strong> Activa las notificaciones o alertas visuales para recibir un aviso 30 minutos antes.</p>
+      <button class="btn btn-primary" id="btnPermiso" style="width:auto; padding: 10px 20px; font-size: 0.85rem;">Activar Alertas</button>
+    </div>
+
+    <section class="card">
+      <div class="card-title"><div class="card-title-left">Repartiendo Ahora</div></div>
+      <div id="enTurnoAhora"><div class="empty">Cargando datos...</div></div>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><div class="card-title-left">Próximos Turnos</div></div>
+      <div id="proximosTurnos"><div class="empty">Cargando datos...</div></div>
+    </section>
+
+    <section class="card" id="miTurnoCard" style="display: none; border: 2px solid var(--success);">
+      <div class="card-title">
+        <div class="card-title-left" style="color: var(--success);">Mi Turno Registrado</div>
+        <button class="btn-edit-icon" id="btnEditarMiTurno" title="Editar mi horario">✏️</button>
+      </div>
+      <div id="miTurnoInfo"></div>
+    </section>
+
+    <section class="card" id="seccionRegistro">
+      <div class="card-title">
+        <div class="card-title-left" id="formTitle">Registrar mi Turno</div>
+        <button class="btn-ghost" id="btnCancelarEdicion" style="display: none; padding: 6px 12px; font-size: 0.8rem;">Cancelar</button>
+      </div>
+      <form id="form" autocomplete="off">
+        <div class="grid2">
+          <label class="field">
+            <span>Nombre completo</span>
+            <input type="text" id="nombre" required placeholder="Ej. Juan Pérez" maxlength="60">
+          </label>
+          <label class="field">
+            <span>Número de teléfono</span>
+            <input type="tel" id="telefono" required placeholder="Ej. 555 123 4567" maxlength="20">
+          </label>
+          <label class="field">
+            <span>Hora de inicio</span>
+            <input type="time" id="inicio" required value="09:00">
+          </label>
+          <label class="field">
+            <span>Hora de fin</span>
+            <input type="time" id="fin" required value="18:00">
+          </label>
+        </div>
+        <div class="field">
+          <span>Días que trabajo</span>
+          <div class="dias" id="diasWrap"></div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btnGuardar">Guardar mi Turno</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><div class="card-title-left">Directorio por Día</div></div>
+      <div class="chips" id="chips"></div>
+      <div class="lista" id="lista"></div>
+    </section>
+  </div>
+
+  <!-- ============ VISTA ADMIN ============ -->
+  <div class="admin-section">
+    <header class="hero">
+      <div class="logo-img" style="background: #111;">
+        <span style="color: white; font-size: 1.5rem;">👑</span>
+      </div>
+      <div class="brand-text">
+        <h1>Panel de Control</h1>
+        <p>Monitoreo en tiempo real · FoodLink</p>
+      </div>
+      <button class="btn btn-ghost" id="btnAdminNotif" style="margin-left: auto;">🔔 Activar avisos Admin</button>
+    </header>
+
+    <div id="bannerAdmin" style="display:none; background:rgba(255,26,26,.1); border:1px solid var(--accent); color:var(--accent); border-radius:12px; padding:14px 20px; font-size:.9rem; margin-bottom:20px; font-weight:600;"></div>
+
+    <section class="card">
+      <div class="card-title"><div class="card-title-left">Monitoreo en Vivo</div></div>
+      <div style="margin-bottom:20px">
+        <span class="stat-badge" id="statTotal">👥 0 registrados</span>
+        <span class="stat-badge now" id="statNow">🟢 0 en turno</span>
+        <span class="stat-badge soon" id="statSoon">⏰ 0 próximos</span>
+      </div>
+      <div class="live-grid">
+        <div class="live-box now">
+          <h4>🟢 Repartiendo AHORA</h4>
+          <div id="adminNow"><div class="empty" style="padding:10px 0">—</div></div>
+        </div>
+        <div class="live-box soon">
+          <h4>⏰ Empiezan Pronto</h4>
+          <div id="adminSoon"><div class="empty" style="padding:10px 0">—</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-title"><div class="card-title-left">Base de Datos</div></div>
+      <div class="lista" id="listaAdmin"><div class="empty">Cargando...</div></div>
+    </section>
+
+    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+      <button class="btn btn-ghost" id="btnExport">⬇ Exportar CSV</button>
+      <button class="btn btn-danger" id="btnClear">Borrar todos los datos</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- MODAL CONTRASEÑA -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <h3>🔒 Acceso Administrador</h3>
+    <input type="password" id="pinInput" maxlength="10" placeholder="••••••" inputmode="numeric">
+    <button class="btn btn-primary" id="pinOk">Desbloquear</button>
+    <button class="btn btn-ghost" id="pinCancel" style="margin-top:10px; width:100%;">Cancelar</button>
+  </div>
+</div>
+
+<!-- ALARMA VISUAL (FALLBACK) -->
+<div class="alarma-overlay" id="alarmaOverlay">
+  <div class="alarma-box">
+    <h2>⏰ ¡ATENCIÓN!</h2>
+    <p id="alarmaTexto">Tu turno está por comenzar.</p>
+    <button class="btn btn-primary" onclick="document.getElementById('alarmaOverlay').style.display='none'">Entendido</button>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyA5Lf6uIfLSzq5XK-TVpzlxXU8rA9jf7iQ",
+  authDomain: "horairosfl.firebaseapp.com",
+  databaseURL: "https://horairosfl-default-rtdb.firebaseio.com",
+  projectId: "horairosfl",
+  storageBucket: "horairosfl.firebasestorage.app",
+  messagingSenderId: "281906315359",
+  appId: "1:281906315359:web:7e4351f84e0a2a67845bea"
+};
+
+const CONFIG = {
+  minutosAviso: 30,
+  adminPin: "0101",
+  alertaTardeMin: 5       
+};
+
+const DIAS = [
+  {id:0, nombre:'Domingo',  corto:'Dom'},
+  {id:1, nombre:'Lunes',    corto:'Lun'},
+  {id:2, nombre:'Martes',   corto:'Mar'},
+  {id:3, nombre:'Miércoles',corto:'Mié'},
+  {id:4, nombre:'Jueves',   corto:'Jue'},
+  {id:5, nombre:'Viernes',  corto:'Vie'},
+  {id:6, nombre:'Sábado',   corto:'Sáb'}
+];
+const ORDEN = [1,2,3,4,5,6,0];
+
+let state = { registros: [] };
+let diaSel = new Date().getDay();
+let adminMode = false;
+const yaAvisado = { repartidor: new Set(), admin: new Set() };
+let primeraCarga = true;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+function banner(el, msg){
+  el.textContent = msg; el.style.display='block';
+  clearTimeout(el._t); el._t = setTimeout(()=>el.style.display='none', 8000);
+}
+function aMinutos(hhmm){ const [h,m]=hhmm.split(':').map(Number); return h*60+m; }
+function ahoraMin(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+
+function formatearTiempo(minutosTotales) {
+  if (minutosTotales < 1) return '0m';
+  const h = Math.floor(minutosTotales / 60);
+  const m = minutosTotales % 60;
+  if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  return `${m}m`;
+}
+
+/* ---------- Firebase ---------- */
+let db = null;
+try{
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+}catch(e){
+  console.error(e);
+}
+
+if(db){
+  db.ref('.info/connected').on('value', (snap) => {
+    const dot = $('statusDot');
+    const txt = $('statusText');
+    if (snap.val() === true) {
+      dot.classList.add('online');
+      txt.textContent = 'En línea';
+    } else {
+      dot.classList.remove('online');
+      txt.textContent = 'Sin conexión';
+    }
+  });
+}
+
+function guardarRegistro(reg){ return db.ref('repartidores').push(reg); }
+function actualizarRegistro(id, reg){ return db.ref('repartidores/' + id).update(reg); }
+function eliminarRegistro(id){ return db.ref('repartidores/' + id).remove(); }
+function borrarTodo(){ return db.ref('repartidores').remove(); }
+
+function escuchar(){
+  db.ref('repartidores').on('value', snap=>{
+    const val = snap.val() || {};
+    const prevIds = new Set(state.registros.map(r=>r.id));
+    state.registros = Object.entries(val).map(([id,r])=>({ id, ...r }));
+
+    if(!primeraCarga){
+      state.registros.forEach(r=>{
+        if(!prevIds.has(r.id)){
+          if(adminMode) mostrarNotif('🛵 Nuevo repartidor registrado', `${r.nombre}`, 'nuevo-' + r.id);
+        }
+      });
+    }
+    primeraCarga = false;
+    render(); 
+    renderAdmin();
+    checkUserStatus(); 
+  }, err=>{
+    console.error(err);
+  });
+}
+
+function pintarDias(){
+  $('diasWrap').innerHTML = ORDEN.map(d=>{
+    const n = DIAS.find(x=>x.id===d);
+    return `<label class="dia-chip">
+      <input type="checkbox" value="${d}" ${d===1?'checked':''}>
+      <span>${n.nombre}</span>
+    </label>`;
+  }).join('');
+}
+
+function enTurnoAhora(r, dia, min){ return r.dias.includes(dia) && min >= aMinutos(r.horaInicio) && min < aMinutos(r.horaFin); }
+function proximoTurno(r, dia, min){
+  if(!r.dias.includes(dia)) return false;
+  const falta = aMinutos(r.horaInicio) - min;
+  return falta > 0 && falta <= 180;
+}
+
+function render(){
+  const ahora = new Date(); const dia = ahora.getDay(); const min = ahoraMin();
+
+  const enTurno = state.registros.filter(r=> enTurnoAhora(r, dia, min)).sort((a,b)=> aMinutos(a.horaInicio) - aMinutos(b.horaInicio));
+  const proximos = state.registros.filter(r=> proximoTurno(r, dia, min)).sort((a,b)=> aMinutos(a.horaInicio) - aMinutos(b.horaInicio));
+
+  $('enTurnoAhora').innerHTML = enTurno.length
+    ? enTurno.map(r=>{
+        const falta = aMinutos(r.horaFin) - min;
+        return `<div class="item">
+          <div class="avatar">${esc((r.nombre[0]||'?').toUpperCase())}</div>
+          <div class="info">
+            <div class="nombre">${esc(r.nombre)}</div>
+            <div class="meta">
+              <span class="hora-badge">🕒 ${esc(r.horaInicio)} – ${esc(r.horaFin)}</span>
+              <span class="tiempo-restante">Le quedan ${formatearTiempo(falta)}</span>
+              <a href="tel:${esc(r.telefono)}">📞 ${esc(r.telefono)}</a>
+            </div>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div class="empty">Nadie está en turno ahora mismo.</div>';
+
+  $('proximosTurnos').innerHTML = proximos.length
+    ? proximos.map(r=>{
+        const falta = aMinutos(r.horaInicio) - min;
+        return `<div class="item">
+          <div class="avatar">${esc((r.nombre[0]||'?').toUpperCase())}</div>
+          <div class="info">
+            <div class="nombre">${esc(r.nombre)}</div>
+            <div class="meta">
+              <span class="hora-badge">🕒 ${esc(r.horaInicio)} – ${esc(r.horaFin)}</span>
+              <span class="tiempo-restante" style="color:var(--accent); background:rgba(255,26,26,0.05)">Empieza en ${formatearTiempo(falta)}</span>
+              <a href="tel:${esc(r.telefono)}">📞 ${esc(r.telefono)}</a>
+            </div>
+          </div>
+        </div>`;
+      }).join('')
+    : '<div class="empty">No hay turnos próximos hoy.</div>';
+
+  $('chips').innerHTML = ORDEN.map(d=>{
+    const n = DIAS.find(x=>x.id===d);
+    const count = state.registros.filter(r=>r.dias.includes(d)).length;
+    return `<button type="button" class="chip ${d===diaSel?'active':''}" data-day="${d}">
+      ${n.corto} <b>${count}</b></button>`;
+  }).join('');
+  $('chips').querySelectorAll('.chip').forEach(c=>{
+    c.onclick = ()=>{ diaSel = Number(c.dataset.day); render(); };
+  });
+
+  const regs = state.registros.filter(r=>r.dias.includes(diaSel)).sort((a,b)=> a.horaInicio.localeCompare(b.horaInicio));
+
+  $('lista').innerHTML = regs.length
+    ? regs.map(r=>`
+      <div class="item">
+        <div class="avatar">${esc((r.nombre[0]||'?').toUpperCase())}</div>
+        <div class="info">
+          <div class="nombre">${esc(r.nombre)}</div>
+          <div class="meta">
+            <span class="hora-badge">🕒 ${esc(r.horaInicio)} – ${esc(r.horaFin)}</span>
+            <a href="tel:${esc(r.telefono)}">📞 ${esc(r.telefono)}</a>
+          </div>
+        </div>
+      </div>`).join('')
+    : '<div class="empty">Nadie registrado este día.</div>';
+}
+
+function renderAdmin(){
+  if(!adminMode) return;
+  const ahora = new Date(); const dia = ahora.getDay(); const min = ahoraMin();
+
+  const enTurno = state.registros.filter(r=> enTurnoAhora(r, dia, min));
+  const proximos = state.registros.filter(r=> proximoTurno(r, dia, min)).sort((a,b)=> aMinutos(a.horaInicio) - aMinutos(b.horaInicio));
+
+  $('statTotal').textContent = `👥 ${state.registros.length} registrados`;
+  $('statNow').textContent = `🟢 ${enTurno.length} en turno`;
+  $('statSoon').textContent = `⏰ ${proximos.length} próximos`;
+
+  $('adminNow').innerHTML = enTurno.length
+    ? enTurno.map(r=>{
+        const falta = aMinutos(r.horaFin) - min;
+        return `<div class="live-person"><span class="dot-live"></span>
+          <span class="who">${esc(r.nombre)}</span>
+          <span class="when">sale en ${formatearTiempo(falta)}</span></div>`;
+      }).join('')
+    : '<div class="empty" style="padding:10px 0">—</div>';
+
+  $('adminSoon').innerHTML = proximos.length
+    ? proximos.map(r=>{
+        const falta = aMinutos(r.horaInicio) - min;
+        return `<div class="live-person"><span class="dot-live"></span>
+          <span class="who">${esc(r.nombre)}</span>
+          <span class="when">en ${formatearTiempo(falta)}</span></div>`;
+      }).join('')
+    : '<div class="empty" style="padding:10px 0">—</div>';
+
+  $('listaAdmin').innerHTML = state.registros.length
+    ? state.registros.slice().sort((a,b)=> a.nombre.localeCompare(b.nombre)).map(r=>{
+        const diasTxt = r.dias.slice().sort((a,b)=>ORDEN.indexOf(a)-ORDEN.indexOf(b)).map(d=>DIAS.find(x=>x.id===d).corto).join(', ');
+        return `<div class="item">
+          <div class="avatar">${esc((r.nombre[0]||'?').toUpperCase())}</div>
+          <div class="info">
+            <div class="nombre">${esc(r.nombre)}</div>
+            <div class="meta">
+              <span class="hora-badge">🕒 ${esc(r.horaInicio)} – ${esc(r.horaFin)}</span>
+              <span>${diasTxt}</span>
+              <a href="tel:${esc(r.telefono)}">📞 ${esc(r.telefono)}</a>
+            </div>
+          </div>
+          <button class="del" data-id="${r.id}" title="Eliminar">✕</button>
+        </div>`;
+      }).join('')
+    : '<div class="empty">Sin registros.</div>';
+
+  $('listaAdmin').querySelectorAll('.del').forEach(b=>{
+    b.onclick = ()=>{
+      if(!confirm('¿Eliminar este registro?')) return;
+      eliminarRegistro(b.dataset.id);
+      toast('Eliminado');
+    };
+  });
+}
+
+/* =========================================================
+   LÓGICA DE ESTADO DEL USUARIO (REGISTRO / EDICIÓN)
+   ========================================================= */
+function checkUserStatus() {
+    const userId = localStorage.getItem('foodlink_user');
+    const form = $('seccionRegistro');
+    const card = $('miTurnoCard');
+    
+    if (userId) {
+        const userReg = state.registros.find(r => r.id === userId);
+        if (userReg) {
+            if (form.style.display !== 'block') { 
+                form.style.display = 'none';
+                card.style.display = 'block';
+                
+                const diasTxt = userReg.dias.slice().sort((a,b)=>ORDEN.indexOf(a)-ORDEN.indexOf(b)).map(d=>DIAS.find(x=>x.id===d).nombre).join(', ');
+                $('miTurnoInfo').innerHTML = `
+                    <div class="info" style="margin-top: 10px;">
+                        <div class="nombre" style="font-size: 1.2rem;">${esc(userReg.nombre)}</div>
+                        <div class="meta" style="margin-top: 10px; font-size: 0.95rem;">
+                            <span class="hora-badge" style="font-size: 0.9rem;">🕒 ${esc(userReg.horaInicio)} – ${esc(userReg.horaFin)}</span>
+                            <span style="color: #333; font-weight: 600;">📅 ${diasTxt}</span>
+                            <a href="tel:${esc(userReg.telefono)}">📞 ${esc(userReg.telefono)}</a>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            localStorage.removeItem('foodlink_user');
+            card.style.display = 'none';
+            form.style.display = 'block';
+        }
+    } else {
+        card.style.display = 'none';
+        form.style.display = 'block';
+    }
+}
+
+$('btnEditarMiTurno').addEventListener('click', () => {
+    const userId = localStorage.getItem('foodlink_user');
+    const userReg = state.registros.find(r => r.id === userId);
+    if (!userReg) return;
+
+    $('nombre').value = userReg.nombre;
+    $('telefono').value = userReg.telefono;
+    $('inicio').value = userReg.horaInicio;
+    $('fin').value = userReg.horaFin;
+    document.querySelectorAll('#diasWrap input').forEach(chk => {
+        chk.checked = userReg.dias.includes(Number(chk.value));
+    });
+
+    $('miTurnoCard').style.display = 'none';
+    $('seccionRegistro').style.display = 'block';
+    
+    $('formTitle').textContent = 'Editar mi Turno';
+    $('btnGuardar').textContent = 'Guardar Cambios';
+    $('btnCancelarEdicion').style.display = 'block';
+
+    window.scrollTo({ top: $('seccionRegistro').offsetTop - 20, behavior: 'smooth' });
+});
+
+$('btnCancelarEdicion').addEventListener('click', () => {
+    $('seccionRegistro').style.display = 'none';
+    $('miTurnoCard').style.display = 'block';
+    $('formTitle').textContent = 'Registrar mi Turno';
+    $('btnGuardar').textContent = 'Guardar mi Turno';
+    $('btnCancelarEdicion').style.display = 'none';
+});
+
+$('form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const nombre = $('nombre').value.trim();
+  const telefono = $('telefono').value.trim();
+  const horaInicio = $('inicio').value;
+  const horaFin = $('fin').value;
+  const dias = [...document.querySelectorAll('#diasWrap input:checked')].map(i=>Number(i.value));
+
+  if(!nombre || !telefono){ toast('Completa nombre y teléfono'); return; }
+  if(!dias.length){ toast('Selecciona al menos un día'); return; }
+  if(horaFin <= horaInicio){ toast('Hora de fin debe ser mayor'); return; }
+
+  const userId = localStorage.getItem('foodlink_user');
+
+  try{
+    if (userId) {
+        await actualizarRegistro(userId, { nombre, telefono, horaInicio, horaFin, dias });
+        toast('✅ Horario actualizado');
+    } else {
+        const nuevoRegistro = await guardarRegistro({ nombre, telefono, horaInicio, horaFin, dias, creado: new Date().toISOString() });
+        localStorage.setItem('foodlink_user', nuevoRegistro.key);
+        toast('✅ Turno guardado correctamente');
+    }
+    
+    $('form').reset();
+    $('formTitle').textContent = 'Registrar mi Turno';
+    $('btnGuardar').textContent = 'Guardar mi Turno';
+    $('btnCancelarEdicion').style.display = 'none';
+    checkUserStatus();
+    
+  }catch(err){
+    toast('❌ Error de conexión al guardar.');
+  }
+});
+
+/* ---------- NOTIFICACIONES Y ALARMA VISUAL ---------- */
+function notifOk(){ return 'Notification' in window && Notification.permission === 'granted'; }
+
+async function pedirPermiso(){
+  if(!('Notification' in window)) {
+    alert("Tu navegador no soporta notificaciones, pero usaremos la Alarma Visual.");
+    return false;
+  }
+  if (!window.isSecureContext) {
+    alert("⚠️ Para notificaciones del sistema, necesitas HTTPS. Se usará la Alarma Visual.");
+    return false;
+  }
+  if (Notification.permission === 'denied') {
+    alert("⚠️ Has bloqueado las notificaciones en tu navegador. Usaremos la Alarma Visual en pantalla.");
+    return false;
+  }
+  return (await Notification.requestPermission()) === 'granted';
+}
+
+function pitar(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination); o.frequency.value = 880;
+    g.gain.setValueAtTime(.12, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + 1.5);
+    o.start(); o.stop(ctx.currentTime + 1.5);
+  }catch(e){}
+}
+
+function mostrarNotif(titulo, cuerpo, tag){
+  pitar(); // Suena siempre
+  
+  if(notifOk()) {
+    // Si el navegador lo permite, muestra la notificación nativa
+    try{ new Notification(titulo, {body: cuerpo, tag}); }catch(e){}
+  } else {
+    // SI ESTÁ BLOQUEADO: Muestra la alarma gigante en pantalla
+    $('alarmaTexto').textContent = cuerpo;
+    $('alarmaOverlay').style.display = 'flex';
+  }
+}
+
+function revisar(){
+  const ahora = new Date(); const dia = ahora.getDay(); const min = ahoraMin();
+
+  state.registros.forEach(r=>{
+    if(!r.dias.includes(dia)) return;
+    const falta = aMinutos(r.horaInicio) - min;
+    if(falta > 0 && falta <= CONFIG.minutosAviso){
+      const k = 'r-' + r.id + '-' + dia;
+      if(!yaAvisado.repartidor.has(k)){
+        yaAvisado.repartidor.add(k);
+        mostrarNotif('⏰ Tu turno empieza pronto',
+          `${r.nombre}, tu turno inicia en ${formatearTiempo(falta)}.`, k);
+      }
+    }
+  });
+}
+
+$('btnPermiso').addEventListener('click', async ()=>{
+  if(await pedirPermiso()){
+    toast('🔔 Notificaciones activadas');
+    $('notifBanner').style.display = 'none';
+    mostrarNotif('Notificaciones Activadas', 'Te avisaremos 30 mins antes de tu turno.', 'bienvenida');
+  } else {
+    toast('🔔 Alarma visual activada');
+    $('notifBanner').style.display = 'none';
+  }
+});
+
+$('btnAdminNotif').addEventListener('click', async ()=>{
+  if(await pedirPermiso()){
+    toast('🔔 Avisos admin activados');
+    mostrarNotif('Avisos Admin activados', 'Recibirás alertas de turnos.', 'admin-bienvenida');
+  } else {
+    toast('🔔 Alarma visual activada');
+  }
+});
+
+$('adminToggle').addEventListener('click', ()=>{
+  if(adminMode){
+    adminMode = false;
+    document.body.classList.remove('admin');
+    $('adminToggle').textContent = '🔒 Modo Admin';
+    toast('Modo repartidor');
+  }else{
+    $('pinOverlay').classList.add('show');
+    $('pinInput').value = '';
+    setTimeout(()=>$('pinInput').focus(), 100);
+  }
+});
+$('pinCancel').addEventListener('click', ()=> $('pinOverlay').classList.remove('show'));
+$('pinOk').addEventListener('click', ()=>{
+  if($('pinInput').value === CONFIG.adminPin){
+    adminMode = true;
+    document.body.classList.add('admin');
+    $('adminToggle').textContent = '🔓 Salir de Admin';
+    $('pinOverlay').classList.remove('show');
+    renderAdmin();
+    toast('👑 Bienvenido, Admin');
+  }else{
+    toast('Contraseña incorrecta'); $('pinInput').value = '';
+  }
+});
+$('pinInput').addEventListener('keydown', e=>{ if(e.key==='Enter') $('pinOk').click(); });
+
+$('btnExport').addEventListener('click', ()=>{
+  if(!state.registros.length){ toast('No hay registros'); return; }
+  const filas = [['Nombre','Telefono','Dias','Hora inicio','Hora fin']];
+  state.registros.forEach(r=>{
+    filas.push([r.nombre, r.telefono, r.dias.slice().sort((a,b)=>ORDEN.indexOf(a)-ORDEN.indexOf(b)).map(d=>DIAS.find(x=>x.id===d).nombre).join(' / '), r.horaInicio, r.horaFin]);
+  });
+  const csv = filas.map(f=>f.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'turnos_repartidores.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+});
+
+$('btnClear').addEventListener('click', ()=>{
+  if(!confirm('¿Borrar TODOS los registros? Afecta a todos los teléfonos.')) return;
+  borrarTodo(); 
+  localStorage.removeItem('foodlink_user');
+  checkUserStatus();
+  toast('Todos los registros borrados');
+});
+
+pintarDias();
+checkUserStatus(); 
+
+if(db){
+  escuchar();
+  setInterval(revisar, 30000);
+  setInterval(render, 60000);
+  setTimeout(revisar, 1500);
+}
+</script>
+</body>
+</html>
